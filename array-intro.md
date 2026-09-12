@@ -330,6 +330,76 @@ Python lists promise "amortized `O(1)`" appends.
 | Append (amortized, list)  | `O(1)`     |
 | Insert / delete in middle | `O(n)`     |
 
+### Why each operation costs that much
+
+#### Access by index - O(1)
+
+As shown in the memory-mapping section, the address of an element is
+computed directly:
+
+```text
+address = base_address + index * size_of_element
+```
+
+One multiplication, one addition, then a direct read from that address.
+The CPU jumps straight to the location — no scanning is involved.
+
+#### Update by index - O(1)
+
+Updating uses the same address arithmetic and writes to that exact
+location:
+
+```text
+array[2] = 99   # base + (2 * size) -> write 99 there
+```
+
+Since the address is known instantly and nothing needs to shift, an
+update is just as fast as a read.
+
+#### Search / linear scan - O(n)
+
+Array elements are unordered, so there is no way to jump to a value. In
+the worst case the value is at the last position — or missing — and every
+one of the `n` elements must be checked:
+
+```text
+for value in array:      # worst case: check all n elements
+    if value == target:
+        return True
+```
+
+Constant-time indexing does not help here, because the position of a
+value is unknown.
+
+#### Insert / delete in the middle - O(n)
+
+To keep the array contiguous, every element after the insertion or
+deletion point must be moved by one slot. For example, inserting `10`
+at index `2`:
+
+```text
+before: [1, 2, 3, 4, 5]
+after:  [1, 2, 10, 3, 4, 5]
+              ^--  3, 4, 5 all shifted right by one
+```
+
+Up to `n` elements need to shift, so the operation is `O(n)` regardless
+of how fast a single move is.
+
+#### Append (list) - amortized O(1)
+
+Appending normally just writes the new value at `length` and increments
+the counter — a single, `O(1)` step:
+
+```text
+items = [1, 2, 3]
+items.append(4)   # write at index 3, length becomes 4
+```
+
+Only when the array is full does a resize happen, and that rare `O(n)`
+copy cost is spread across all the preceding cheap appends by doubling
+explained in the amortized section — so the average stays `O(1)`.
+
 ### Space complexity
 
 - `O(n)` to store `n` elements.
